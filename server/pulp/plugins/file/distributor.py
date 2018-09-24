@@ -203,6 +203,7 @@ class FileDistributor(Distributor):
     def _symlink_unit(self, build_dir, unit, target_paths):
         """
         For each unit, put a symlink in the build dir that points to its canonical location on disk.
+        The `target_paths` are always confined under the `build_dir`.
 
         :param build_dir: The path on the local filesystem that we want to symlink the units into.
                           This path should already exist.
@@ -213,8 +214,11 @@ class FileDistributor(Distributor):
         :type  target_paths: list of L{str}
         """
         for target_path in target_paths:
-            # symlink_filename = os.path.join(build_dir, unit.unit_key['name'])
-            symlink_filename = os.path.join(build_dir, target_path)
+            # any two absolute paths always share at least the root element
+            abs_target_path = os.path.abspath(target_path)
+            target_path_build_dir_prefix = os.path.commonprefix([build_dir, abs_target_path])
+            symlink_filename = os.path.join(
+                build_dir, abs_target_path.lstrip(target_path_build_dir_prefix))
             if os.path.exists(symlink_filename) or os.path.islink(symlink_filename):
                 # There's already something there with the desired symlink filename. Let's try and
                 # see if it points at the right thing. If it does, we don't need to do anything. If
